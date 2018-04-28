@@ -13,8 +13,14 @@ import * as firebase from 'firebase';
   if (user != null) {
     console.log('We are authenticated now!')
   }
-  
+  //var db = firebaseApp.database();
+  //const orderRef = db.ref().child('OrderList')
+  //orderRef.on('value', getData, getErr)
   // Do other things
+  //const _getOrder = function getOrder(data){
+    //return data.val();
+  //}
 })
   
   export default firebaseApp
+  //export default _getOrder
