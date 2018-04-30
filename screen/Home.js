@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, Button, Text, ImageBackground, Image, Alert, Modal, TextInput, FlatList } from 'react-native';
+import { ScrollView, ListView, TouchableHighlight, TouchableOpacity, View, StyleSheet, Button, Text, ImageBackground, Image, Alert, Modal, TextInput, FlatList } from 'react-native';
 import { Constants, Font } from 'expo';
 import ReactNativeModal from 'react-native-modal';
 import { StackNavigator } from 'react-navigation';
@@ -13,29 +13,63 @@ var db = firebaseApp.database()
 //const orderList = <View style={StyleSheet.box}><Text>Sorry, that is no order</Text></View>;
 
 export default class Home extends Component {
-    state = {
+  constructor (props) {
+    super(props)
+    this.state = {
       quit : false,
       detail: '',
       order: [],
-      test:'',
+      noOrder: [{message: "Sorry, that is no order", key: 'noOrder'}]
     }
+    
+  }
 
     static navigationOptions = {
         
     }
 
     componentWillMount() {
+      setTimeout(()=>{},3000)
       this.orderListener()
-      console.log(JSON.stringify(this.state.order[1]))
+      console.log(this.state.order[1])
+      // var dataSource = new ListView.DataSource({rowHasChanged:(r1,r2) => r1.guid != r2.guid});
+      // this.setState({orderListSource: dataSource.cloneWithRows(this.state.order)})
+    }
+
+    componentDidMount() {
+      this._setting();
     }
 
     orderListener(){
       const orderRef = db.ref().child('OrderList')
-      orderRef.on('child_added', snap => { var temp = snap.val(); this.setState({order: this.state.order.concat([temp])}); console.log("The data is "+temp); console.log(temp); console.log("The array is "+this.state.order[0]);console.log(this.state.order[0].restaurant) }, err => console.log(err))
+      orderRef.on('child_added', snap => { var value = snap.val(); this.setState({order: this.state.order.concat([{order: snap.val(), orderKey: snap.key}])}); console.log("Order: "+value);console.log("Order is "+this.state.order)}, err => console.log(err))
+      orderRef.on('child_changed', snap => { 
+        this.setState({order: this._changeOrder(this.state.order, snap)})
+       }, err => console.log(err))
+      orderRef.on('child_removed', snap => { 
+        this.setState({order: this._removeOrder(this.state.order, snap.key)})
+      }, err => console.log(err))
     }
 
-    Home(){
-      this._setting();
+    _changeOrder(order, snap){//array, snap
+      for(i = 0; i < order.length; i++){
+        if(order[i].orderKey === snap.key){
+          order[i].order = snap.val()
+          break
+        }
+      }
+      console.log("Change success")
+      return order
+    }
+
+    _removeOrder(order, key){
+      newOrder = []
+      for(i = 0; i < order.length; i++){
+        if(order[i].orderKey === key) continue;
+        newOrder.push(order[i])
+      }
+      console.log("Remove success")
+      return newOrder
     }
 
     _setting = async() => {
@@ -56,62 +90,84 @@ export default class Home extends Component {
       }
     }
 
-    orderListing = async() => {
-      console.log('running')
-       if(this.state.order.length === 0){
-        this.setState({test:<View style={StyleSheet.box}><Text>Sorry, that is no order</Text></View>})
-      }else{
-        this.setState({test:<FlatList data={this.state.order} renderItem={({item})=>( <ListItem title={item.restaurant} subtitle={ <View style={{flex:0}}>  <Text>{item.destination}</Text> </View> } /> )} keyExtractor={item=>item.restaurant}/>})
-      }
-    }
+    renderSeparator = () => {
+      return (
+        <View
+          style={{
+            height: 1,
+            width: '90%',
+            backgroundColor: '#CED0CE',
+            marginLeft: '2%',
+          }}
+        />
+      );
+    };
+
+    renderHeader = () => {
+      return (<View>
+      <View style={ { flex: 1, flexDirection:'row',
+      height: 50,
+      width: '100%',
+      backgroundColor: '#ff5500',
+      alignItems: 'center',} }>
+          <TouchableOpacity style={{flex:0, height: 50, width: 50, backgroundColor: '#000000',}}/>
+          <View style={{flex:1, height: 50, justifyContent: 'center', alignItems: 'center'}}><Text style={{fontSize:24, color:'#ffffff', fontWeight:'bold'}}>Bleezy</Text></View>
+          <TouchableOpacity style={{flex:0, height: 50, width: 50, backgroundColor: '#000000',}}/>
+              </View><View style={{height:40, width:'100%',backgroundColor:'#eeeeee', alignItems:'center', justifyContent:'center'}}><Text style={{justifyContent:'center', textAlign:'center'}}>Any existing offer is shown below</Text></View></View>);
+    };
 
     render() {
-      /*var db = firebaseApp.database();
-      var testRef = db.ref('OrderList');
-      console.log('run')
-      testRef.on('value', snapshot => {const data = snapshot.val(); this.setState({order:data}); console.log("Description is " + this.state.order);}, err => {console.log(err)});
-      */
-      let orderList = <Text>Waitting...</Text>
       console.log("render");
       var {navigate} = this.props.navigation;
       var {params} = this.props.navigation.state;//parameter pass from before
-      if(this.state.order.length === 0){
-          orderList = <Text>Sorry, that is no order</Text>
-                
-      }else{
-          orderList = <FlatList data={this.state.order} renderItem={({item})=>( <ListItem title={item.restaurant} subtitle={ <View style={{flex:0}}>  <Text>{item.destination}</Text> </View>}/> )} keyExtractor={item=>item.restaurant}/>
-                
-      }
-      return (
-        <View style={styles.container}>
-          <Modal visible={true} supportedOrientations={['portrait']} onRequestClose={() => this.setState({quit:true})} animationType={'fade'} transparent={false}>
-            <View style={styles.pageContainer}>
-              <Text style={styles.paragraph}>
-                Test firebase from cheeTest for order Page
-              </Text>
-              
-              <Text>You : {params.type} with {this.state.detail}</Text>
-              <Text>{this.state.order.length}</Text>
+      //if(this.state.order.length === 0){
+        //console.log("if")
+        const data = this.state.order
+        //if(data.length > 0) {console.log('got data');console.log("total order: " + data); console.log("order: "+data.order);console.log("first order: "+data.order[0]);console.log("first orderKey: "+data.orderKey[0])}
+        return (
+            (data.length > 0) ? 
+            (
               <List>
-                <View style={StyleSheet.box}>
-                {orderList}
-                </View>
-              </List>
-              <ReactNativeModal isVisible={this.state.quit} animationIn="slideInLeft" animationOut="slideOutRight" onRequestClose={() => this.setState({quit:false})}>
-                <View style={styles.outModal}><View style={styles.modal}>
-                  <Text>Are you sure want to quit?</Text>
-                  <View style={{flexDirection:'row'}}> 
-                    <View style={styles.buttonModal}><Button title='Quit' onPress={()=>navigate('FirstPage')} color='#ff5500'/></View>
-                    <View style={styles.buttonModal}><Button title='Stay' onPress={()=>this.setState({quit:false})} color='#ff5500'/></View>
-                  </View>
-                </View></View>
-              </ReactNativeModal>
+            <FlatList
+              data={this.state.order}
+              renderItem={({item}) => {
+                return (
 
-            </View>
-          </Modal>
-        </View>);
+              <TouchableOpacity style={{padding:5,margin:5}} onPress={()=>{Alert.alert("U press " + item.order.rider + " offer")}}>
+                <Text style={{fontSize:18}}>Restaurant : {item.order.restaurant}</Text>
+                <Text style={{fontSize:15}}>Destination : {item.order.destination}</Text>
+                <Text style={{fontSize:15}}>Rider : {item.order.rider}</Text>
+              </TouchableOpacity>
+              )}}
+              
+            keyExtractor={item => item.orderKey}
+            ItemSeparatorComponent={this.renderSeparator}
+            ListHeaderComponent={this.renderHeader}
+            onEndReachedThreshold={50}
+            />
+            </List>
+            ) : (//no order
+              <List>
+            <FlatList
+              data={this.state.noOrder}
+              renderItem={({item}) => {
+                return (
+
+              <TouchableOpacity style={{padding:10}} onPress={()=>{Alert.alert("U press " + item.rider + " offer")}}>
+                <Text style={{fontSize:20, textAlign:'center', justifyContent:'center'}}>{item.message}</Text>
+              </TouchableOpacity>
+              )}}
+              
+            keyExtractor={item => item.key}
+            ItemSeparatorComponent={this.renderSeparator}
+            ListHeaderComponent={this.renderHeader}
+            onEndReachedThreshold={50}
+            />
+            </List>
+            ));            
+      }
     }
-}
+
 
 const styles = StyleSheet.create({
     backgroundImage: {
@@ -123,9 +179,7 @@ const styles = StyleSheet.create({
         backgroundColor:'transparent',
       },
       container: {
-        flex: 0,
-        height: '100%',
-        width: '100%',
+        flex: 1,
         paddingTop: Constants.statusBarHeight,
         backgroundColor: '#ffffff',
         alignItems: 'center',
@@ -133,27 +187,36 @@ const styles = StyleSheet.create({
       },
       pageContainer: {
         flex: 0,
-        height: '100%',
+        height: '92%',
         width: '100%',
         backgroundColor: '#ffffff',
         alignItems: 'center',
         //justifyContent: 'center',
-        paddingTop: '10%'
       },
       title: {
-        marginTop: '75%',
-        fontSize: 64,
+        marginTop: 0,
+        fontSize: 16,
         fontWeight: 'normal',
-        textAlign: 'center',
-        color: '#ffffff',
+        //textAlign: 'center',
+        justifyContent: 'center',
+        padding: 5,
+        color: '#000000',
         width: '100%',
         backgroundColor:'transparent',
         fontFamily: '',
       },
-      box: {
+      upBox: {
         flex: 0,
-        height: '20%',
-        width: '80%',
+        height: '15%',
+        width: '100%',
+        backgroundColor: '#ffffff',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+      downBox: {
+        flex: 0,
+        height: '100%',
+        width: '100%',
         marginBottom: 5,
         marginTop: 5,
         backgroundColor: '#aaaaaa'

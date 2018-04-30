@@ -42,7 +42,7 @@ export default class FirstPage extends Component {
   }
 
   componentWillMount() {
-    
+    setTimeout(()=>{},3000)
   }
 
   render() {
@@ -86,7 +86,7 @@ export default class FirstPage extends Component {
                   Alert.alert(errorCode + '\n' + errorMessage);
                   });}} /></View>
                 <View style={styles.loginButton}><FacebookSignIn navigation={this.props.navigation}/></View>
-                <View style={styles.loginButton}><Button title="Login with Google?" onPress={() => {this.setState({firstPage:'none', page:1, LOGINorREGISTER:'login'}); navigate('Home', {type:'loginGoogle'})}} /></View>
+                <View style={styles.loginButton}><Button title="Alternative" onPress={() => {this.setState({firstPage:'none', page:1, LOGINorREGISTER:'login'}); navigate('Home', {type:'loginGoogle'})}} /></View>
               </View>
               </View>
             </ReactNativeModal>
