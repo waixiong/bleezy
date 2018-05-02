@@ -133,7 +133,7 @@ export default class Home extends Component {
               renderItem={({item}) => {
                 return (
 
-              <TouchableOpacity style={{padding:5,margin:5}} onPress={()=>{Alert.alert("U press " + item.order.rider + " offer")}}>
+              <TouchableOpacity style={{padding:5,margin:5}} onPress={()=>{navigate('OrderMenu', {o: item.order})}}>
                 <Text style={{fontSize:18}}>Restaurant : {item.order.restaurant}</Text>
                 <Text style={{fontSize:15}}>Destination : {item.order.destination}</Text>
                 <Text style={{fontSize:15}}>Rider : {item.order.rider}</Text>
@@ -153,7 +153,7 @@ export default class Home extends Component {
               renderItem={({item}) => {
                 return (
 
-              <TouchableOpacity style={{padding:10}} onPress={()=>{Alert.alert("U press " + item.rider + " offer")}}>
+              <TouchableOpacity style={{padding:10}}>
                 <Text style={{fontSize:20, textAlign:'center', justifyContent:'center'}}>{item.message}</Text>
               </TouchableOpacity>
               )}}
